@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, members, memberships, schedules, attendance, payments
+from app.api.v1.endpoints import auth, members, memberships, schedules, attendance, payments, oauth
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(oauth.router, prefix="/auth", tags=["oauth"])
 api_router.include_router(members.router, prefix="/members", tags=["members"])
 api_router.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
 api_router.include_router(schedules.router, prefix="/schedules", tags=["schedules"])
