@@ -17,10 +17,14 @@ const fadeUp = {
   transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
 }
 
+interface Branch { id: string; name: string }
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [branchId, setBranchId] = useState("")
+  const [branches, setBranches] = useState<Branch[]>([])
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
   const [loading, setLoading] = useState(false)
@@ -29,6 +33,8 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search)
     if (params.get("session") === "expired") setNotice("세션이 만료되었습니다. 다시 로그인해 주세요.")
     else if (params.get("registered") === "true") setNotice("계정이 생성되었습니다. 로그인해 주세요.")
+
+    api.get<Branch[]>("/branches").then((r) => setBranches(r.data)).catch(() => {})
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -36,7 +42,7 @@ export default function LoginPage() {
     setError("")
     setLoading(true)
     try {
-      await api.post("/auth/login", { email, password })
+      await api.post("/auth/login", { email, password, branch_id: branchId || null })
       saveSession()
       router.push("/dashboard")
     } catch (err: unknown) {
@@ -102,6 +108,27 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-7 mb-6"
         >
+          {/* Branch selector */}
+          <div className="flex flex-col gap-2">
+            <label
+              className="text-[11px] uppercase tracking-widest text-[#737373]"
+              style={{ fontFamily: "var(--font-inter)" }}
+            >
+              Branch
+            </label>
+            <select
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              className="w-full h-11 px-3 text-[14px] border-b border-[#e5e5e5] bg-transparent text-black focus:outline-none focus:border-black transition-colors"
+              style={{ fontFamily: "var(--font-inter)" }}
+            >
+              <option value="">지점을 선택하세요</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+
           <AuthInput
             label="Email"
             type="email"

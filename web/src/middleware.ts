@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 const PROTECTED = ["/dashboard"]
 const AUTH_ONLY = ["/login", "/signup"]
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get("access_token")?.value
 

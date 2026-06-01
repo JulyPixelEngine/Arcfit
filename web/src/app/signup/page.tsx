@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, type Transition } from "framer-motion"
@@ -16,13 +16,23 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
 }
 
+interface Branch { id: string; name: string }
+
 export default function SignupPage() {
   const router = useRouter()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
+  const [branchId, setBranchId] = useState("")
+  const [branches, setBranches] = useState<Branch[]>([])
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    api.get<Branch[]>("/branches").then((r) => setBranches(r.data)).catch(() => {})
+  }, [])
 
   function validatePassword(pw: string): string | null {
     if (pw.length < 12) return "비밀번호는 최소 12자리여야 합니다"
@@ -41,7 +51,13 @@ export default function SignupPage() {
 
     setLoading(true)
     try {
-      await api.post("/auth/register", { email, password })
+      await api.post("/auth/register", {
+        name,
+        email,
+        phone: phone || null,
+        password,
+        branch_id: branchId || null,
+      })
       router.push("/login?registered=true")
     } catch (err: unknown) {
       const msg =
@@ -102,6 +118,35 @@ export default function SignupPage() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-7 mb-6"
         >
+          {/* Branch selector */}
+          <div className="flex flex-col gap-2">
+            <label
+              className="text-[11px] uppercase tracking-widest text-[#737373]"
+              style={{ fontFamily: "var(--font-inter)" }}
+            >
+              Branch
+            </label>
+            <select
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              className="w-full h-11 px-3 text-[14px] border-b border-[#e5e5e5] bg-transparent text-black focus:outline-none focus:border-black transition-colors"
+              style={{ fontFamily: "var(--font-inter)" }}
+            >
+              <option value="">지점을 선택하세요</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <AuthInput
+            label="Name"
+            type="text"
+            placeholder="홍길동"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
           <AuthInput
             label="Email"
             type="email"
@@ -109,6 +154,13 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+          />
+          <AuthInput
+            label="Phone"
+            type="tel"
+            placeholder="010-0000-0000"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
           <AuthInput
             label="Password"

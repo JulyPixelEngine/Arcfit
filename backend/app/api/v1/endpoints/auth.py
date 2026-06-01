@@ -12,7 +12,14 @@ router = APIRouter()
 
 @router.post("/register", response_model=UserResponse)
 async def register(body: SignupRequest, response: Response, db: AsyncSession = Depends(get_auth_db)):
-    user, token = await auth_service.register(db, body.email, body.password)
+    user, token = await auth_service.register(
+        db,
+        email=body.email,
+        password=body.password,
+        name=body.name,
+        phone=body.phone,
+        branch_id=body.branch_id,
+    )
     set_auth_cookie(response, token)
     return user
 

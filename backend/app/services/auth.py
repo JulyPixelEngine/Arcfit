@@ -6,13 +6,28 @@ from app.models.user import User
 from app.repositories import user as user_repo
 
 
-async def register(db: AsyncSession, email: str, password: str) -> tuple[User, str]:
+async def register(
+    db: AsyncSession,
+    email: str,
+    password: str,
+    name: str | None = None,
+    phone: str | None = None,
+    branch_id: str | None = None,
+) -> tuple[User, str]:
     existing = await user_repo.get_by_email(db, email)
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     hashed = hash_password(password)
-    user = await user_repo.create(db, email=email, hashed_password=hashed)
+    user = await user_repo.create(
+        db,
+        email=email,
+        hashed_password=hashed,
+        name=name,
+        phone=phone,
+        branch_id=branch_id,
+        role="user",
+    )
     token = create_access_token(user.id)
     return user, token
 
