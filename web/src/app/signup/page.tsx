@@ -1,236 +1,179 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { motion, type Transition } from "framer-motion"
+import { useState, type CSSProperties } from "react"
+import { VStack, HStack } from "@astryxdesign/core/Layout"
+import { Center } from "@astryxdesign/core/Center"
+import { Section } from "@astryxdesign/core/Section"
+import { Grid } from "@astryxdesign/core/Grid"
+import { AspectRatio } from "@astryxdesign/core/AspectRatio"
+import { Button } from "@astryxdesign/core/Button"
+import { Text } from "@astryxdesign/core/Text"
+import { TextInput } from "@astryxdesign/core/TextInput"
+import { TextArea } from "@astryxdesign/core/TextArea"
+import { Link } from "@astryxdesign/core/Link"
+import { Card } from "@astryxdesign/core/Card"
 import api from "@/lib/api"
-import AuthInput from "@/components/AuthInput"
-import SocialButton from "@/components/SocialButton"
-import Divider from "@/components/Divider"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"
-
-const fadeUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
+// AspectRatio has no objectFit/radius prop and there's no Image primitive,
+// so the illustration is styled directly. overflow:hidden masks the crop
+// to the rounded corners.
+const illustrationImg: CSSProperties = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "var(--radius-container)",
+  overflow: "hidden",
 }
 
-interface Branch { id: string; name: string }
-
 export default function SignupPage() {
-  const router = useRouter()
-  const [name, setName] = useState("")
+  const [studioName, setStudioName] = useState("")
+  const [ownerName, setOwnerName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
-  const [branchId, setBranchId] = useState("")
-  const [branches, setBranches] = useState<Branch[]>([])
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [apiError, setApiError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
-  useEffect(() => {
-    api.get<Branch[]>("/branches").then((r) => setBranches(r.data)).catch(() => {})
-  }, [])
+  const errors = submitAttempted
+    ? {
+        studioName: !studioName.trim() ? "필수 입력입니다" : undefined,
+        ownerName: !ownerName.trim() ? "필수 입력입니다" : undefined,
+        email: !email.trim() ? "필수 입력입니다" : undefined,
+      }
+    : {}
 
-  function validatePassword(pw: string): string | null {
-    if (pw.length < 12) return "비밀번호는 최소 12자리여야 합니다"
-    if (!/[A-Z]/.test(pw)) return "대문자를 최소 1개 포함해야 합니다"
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw)) return "특수문자를 최소 1개 포함해야 합니다"
-    return null
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-
-    const pwError = validatePassword(password)
-    if (pwError) { setError(pwError); return }
-    if (password !== confirmPassword) { setError("비밀번호가 일치하지 않습니다"); return }
+  async function handleSubmit() {
+    setSubmitAttempted(true)
+    setApiError("")
+    if (!studioName.trim() || !ownerName.trim() || !email.trim()) return
 
     setLoading(true)
     try {
-      await api.post("/auth/register", {
-        name,
+      await api.post("/leads", {
+        studio_name: studioName,
+        owner_name: ownerName,
         email,
         phone: phone || null,
-        password,
-        branch_id: branchId || null,
+        message: message || null,
       })
-      router.push("/login?registered=true")
+      setSubmitted(true)
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        "Registration failed. Please try again."
-      setError(msg)
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setApiError(typeof msg === "string" ? msg : "신청 중 오류가 발생했습니다. 다시 시도해주세요.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 bg-white">
-      <motion.div
-        className="w-full max-w-[380px]"
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
-      >
-        {/* Wordmark */}
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.05 }}
-          className="mb-14 text-center"
-        >
-          <span
-            className="text-[13px] uppercase tracking-[0.25em] text-black"
-            style={{ fontFamily: "var(--font-inter)" }}
-          >
-            FitCore
-          </span>
-        </motion.div>
+    <Center style={{ minHeight: "100vh" }}>
+      <Section maxWidth={1100} width="100%" padding={10} variant="transparent">
+        <VStack gap={10}>
+          <HStack hAlign="center">
+            <Text type="label" style={{ letterSpacing: "0.3em", textTransform: "uppercase" }}>
+              FitCore
+            </Text>
+          </HStack>
 
-        {/* Heading */}
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
-          className="mb-10 text-center"
-        >
-          <h1
-            className="text-[40px] font-normal leading-[1.15] text-black mb-2"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Create account.
-          </h1>
-          <p
-            className="text-[14px] text-[#737373]"
-            style={{ fontFamily: "var(--font-inter)" }}
-          >
-            Start managing your studio today
-          </p>
-        </motion.div>
+          {submitted ? (
+            <Center>
+              <VStack gap={4} hAlign="center" style={{ maxWidth: 420, textAlign: "center" }}>
+                <Text type="display-2" as="h1">신청이 접수되었습니다!</Text>
+                <Text type="body" color="secondary">
+                  담당자가 확인 후 빠르게 연락드리겠습니다. 회원 10명까지는 기간 제한 없이 전 기능을 무료로 이용하실 수 있어요.
+                </Text>
+                <Link href="/login" type="body" size="sm">로그인 화면으로 돌아가기</Link>
+              </VStack>
+            </Center>
+          ) : (
+            <Card padding={0} width="100%" variant="default">
+              <Grid columns={{ minWidth: 320, repeat: "fit" }} align="stretch" gap={0}>
+                <Section variant="transparent" padding={8}>
+                  <VStack gap={6} style={{ height: "100%" }}>
+                    <VStack gap={3}>
+                      <Text type="display-1" as="h1">우리 센터 무료로 등록하기</Text>
+                      <Text type="body" color="secondary">
+                        회원 10명까지는 기간 제한 없이 전 기능 무료. 지금 신청하고 편하게 테스트해보세요.
+                      </Text>
+                    </VStack>
+                    <AspectRatio ratio={4 / 3}>
+                      <img src="/login-hero.png" alt="" style={illustrationImg} />
+                    </AspectRatio>
+                  </VStack>
+                </Section>
 
-        {/* Form */}
-        <motion.form
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.18 }}
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-7 mb-6"
-        >
-          {/* Branch selector */}
-          <div className="flex flex-col gap-2">
-            <label
-              className="text-[11px] uppercase tracking-widest text-[#737373]"
-              style={{ fontFamily: "var(--font-inter)" }}
-            >
-              Branch
-            </label>
-            <select
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              className="w-full h-11 px-3 text-[14px] border-b border-[#e5e5e5] bg-transparent text-black focus:outline-none focus:border-black transition-colors"
-              style={{ fontFamily: "var(--font-inter)" }}
-            >
-              <option value="">지점을 선택하세요</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          </div>
+                <Section variant="transparent" padding={8}>
+                  <VStack gap={4}>
+                    <Text type="label">센터 정보</Text>
+                    <TextInput
+                      label="센터/스튜디오명"
+                      isLabelHidden
+                      placeholder="센터/스튜디오명*"
+                      value={studioName}
+                      onChange={setStudioName}
+                      status={errors.studioName ? { type: "error", message: errors.studioName } : undefined}
+                    />
+                    <TextInput
+                      label="원장님 성함"
+                      isLabelHidden
+                      placeholder="원장님 성함*"
+                      value={ownerName}
+                      onChange={setOwnerName}
+                      status={errors.ownerName ? { type: "error", message: errors.ownerName } : undefined}
+                    />
+                    <Grid columns={{ minWidth: 180, repeat: "fit" }} gap={3}>
+                      <TextInput
+                        label="이메일"
+                        isLabelHidden
+                        placeholder="이메일*"
+                        value={email}
+                        onChange={setEmail}
+                        status={errors.email ? { type: "error", message: errors.email } : undefined}
+                      />
+                      <TextInput
+                        label="연락처"
+                        isLabelHidden
+                        placeholder="연락처"
+                        value={phone}
+                        onChange={setPhone}
+                      />
+                    </Grid>
 
-          <AuthInput
-            label="Name"
-            type="text"
-            placeholder="홍길동"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <AuthInput
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <AuthInput
-            label="Phone"
-            type="tel"
-            placeholder="010-0000-0000"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <AuthInput
-            label="Password"
-            type="password"
-            placeholder="대문자·특수문자 포함 12자 이상"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <AuthInput
-            label="Confirm Password"
-            type="password"
-            placeholder="비밀번호 재입력"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            error={error}
-          />
+                    <TextArea
+                      label="하고 싶은 말"
+                      isLabelHidden
+                      placeholder="궁금한 점이나 필요한 기능을 알려주세요 (선택)"
+                      value={message}
+                      onChange={setMessage}
+                    />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="
-              w-full bg-black text-white py-3.5 text-[13px] tracking-[0.06em] uppercase
-              hover:opacity-85 transition-opacity duration-200
-              disabled:opacity-40
-            "
-            style={{ fontFamily: "var(--font-inter)" }}
-          >
-            {loading ? "Creating account…" : "Create Account"}
-          </button>
-        </motion.form>
+                    {apiError && <Text type="supporting" className="text-red-500">{apiError}</Text>}
 
-        {/* Divider */}
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.24 }}
-        >
-          <Divider />
-        </motion.div>
+                    {/* hAlign="stretch" = full-width button workaround */}
+                    <VStack hAlign="stretch">
+                      <Button
+                        label={loading ? "제출 중..." : "무료로 등록 신청하기"}
+                        variant="primary"
+                        isDisabled={loading}
+                        onClick={handleSubmit}
+                      />
+                    </VStack>
 
-        {/* Social buttons */}
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.28 }}
-          className="flex flex-col gap-3 mt-5"
-        >
-          <SocialButton
-            provider="google"
-            onClick={() => { window.location.href = `${API_BASE}/auth/google/login` }}
-          />
-          <SocialButton
-            provider="kakao"
-            onClick={() => { window.location.href = `${API_BASE}/auth/kakao/login` }}
-          />
-        </motion.div>
-
-        {/* Footer link */}
-        <motion.p
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.32 }}
-          className="mt-10 text-center text-[13px] text-[#737373]"
-          style={{ fontFamily: "var(--font-inter)" }}
-        >
-          Already have an account?{" "}
-          <Link href="/login" className="text-black underline underline-offset-4 hover:opacity-60 transition-opacity">
-            Sign in
-          </Link>
-        </motion.p>
-      </motion.div>
-    </main>
+                    <HStack hAlign="center">
+                      <Text type="supporting" color="secondary">
+                        이미 계정이 있으신가요?{" "}
+                        <Link href="/login" type="supporting">로그인</Link>
+                      </Text>
+                    </HStack>
+                  </VStack>
+                </Section>
+              </Grid>
+            </Card>
+          )}
+        </VStack>
+      </Section>
+    </Center>
   )
 }

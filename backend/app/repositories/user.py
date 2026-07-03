@@ -39,6 +39,13 @@ async def get_by_id(db: AsyncSession, user_id: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def get_by_trainer_id(db: AsyncSession, trainer_id: str) -> User | None:
+    result = await db.execute(
+        select(User).where(User.trainer_id == trainer_id, User.is_deleted == False)
+    )
+    return result.scalar_one_or_none()
+
+
 async def create(
     db: AsyncSession,
     email: str,
@@ -48,6 +55,7 @@ async def create(
     name: str | None = None,
     phone: str | None = None,
     branch_id: str | None = None,
+    trainer_id: str | None = None,
     role: str = "user",
 ) -> User:
     user = User(
@@ -56,11 +64,20 @@ async def create(
         phone=phone,
         role=role,
         branch_id=branch_id,
+        trainer_id=trainer_id,
         hashed_password=hashed_password,
         provider=provider,
         provider_id=provider_id,
     )
     db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def update(db: AsyncSession, user: User, **kwargs) -> User:
+    for key, value in kwargs.items():
+        setattr(user, key, value)
     await db.commit()
     await db.refresh(user)
     return user
@@ -78,3 +95,15 @@ async def set_active(db: AsyncSession, user: User, is_active: bool) -> User:
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def set_password(db: AsyncSession, user: User, hashed_password: str) -> User:
+    user.hashed_password = hashed_password
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def soft_delete(db: AsyncSession, user: User) -> None:
+    user.is_deleted = True
+    await db.commit()

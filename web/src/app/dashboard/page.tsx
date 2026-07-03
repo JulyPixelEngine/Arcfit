@@ -1,11 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Card, type CardVariant } from "@astryxdesign/core/Card"
+import { Heading } from "@astryxdesign/core/Heading"
+import { Text } from "@astryxdesign/core/Text"
+import { HStack } from "@astryxdesign/core/HStack"
+import { VStack } from "@astryxdesign/core/VStack"
+import { Avatar } from "@astryxdesign/core/Avatar"
+import { Badge, type BadgeVariant } from "@astryxdesign/core/Badge"
+import { StatusDot, type StatusDotVariant } from "@astryxdesign/core/StatusDot"
 import api from "@/lib/api"
 import Sidebar from "@/components/dashboard/Sidebar"
 import Header from "@/components/dashboard/Header"
 import TabBar, { type Tab } from "@/components/dashboard/TabBar"
+import StaffContent from "@/components/dashboard/StaffContent"
+import MembersContent from "@/components/dashboard/MembersContent"
+import ProductsContent from "@/components/dashboard/ProductsContent"
+import LessonsContent from "@/components/dashboard/LessonsContent"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +27,7 @@ interface User {
   name?: string
   role: string
   provider: string
+  branch_id?: string | null
   created_at: string
 }
 
@@ -65,14 +78,6 @@ function IconAlert() {
   )
 }
 
-function IconSearch() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-    </svg>
-  )
-}
-
 // ─── Shared mock data ─────────────────────────────────────────────────────────
 
 type SessionStatus = "Confirmed" | "Pending" | "Completed"
@@ -85,6 +90,12 @@ const STATUS_STYLE: Record<SessionStatus, string> = {
   Confirmed: "bg-blue-50 text-blue-600",
   Pending: "bg-yellow-50 text-yellow-600",
   Completed: "bg-green-50 text-green-600",
+}
+
+const STATUS_BADGE_VARIANT: Record<SessionStatus, BadgeVariant> = {
+  Confirmed: "blue",
+  Pending: "warning",
+  Completed: "success",
 }
 
 const TODAY_SESSIONS: Session[] = [
@@ -109,12 +120,6 @@ const MOCK_MEMBERS: Member[] = [
   { name: "Han Eunji",     phone: "010-7890-1234", status: "suspended", remaining: 0,  branch: "Hongdae" },
 ]
 
-const MEMBER_STATUS_STYLE: Record<Member["status"], string> = {
-  active: "bg-green-50 text-green-600",
-  inactive: "bg-gray-100 text-gray-500",
-  suspended: "bg-red-50 text-red-500",
-}
-
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
 
@@ -137,18 +142,20 @@ const WEEKLY_SLOTS: WeekSlot[] = [
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, color, icon }: {
-  label: string; value: string | number; sub: string; color: string; icon: React.ReactNode
+function StatCard({ label, value, sub, variant, iconBg, icon }: {
+  label: string; value: string | number; sub: string; variant: CardVariant; iconBg: string; icon: React.ReactNode
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${color}`}>{icon}</div>
-      <div className="min-w-0">
-        <p className="text-[12px] text-gray-400 uppercase tracking-wide">{label}</p>
-        <p className="text-[28px] font-semibold text-gray-900 leading-tight mt-0.5">{value}</p>
-        <p className="text-[12px] text-gray-400 mt-0.5">{sub}</p>
-      </div>
-    </div>
+    <Card variant={variant} padding={4}>
+      <HStack gap={4} align="start">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>{icon}</div>
+        <VStack gap={0} className="min-w-0">
+          <Text type="supporting" color="secondary">{label}</Text>
+          <Heading level={2} type="display-3">{value}</Heading>
+          <Text type="supporting" color="secondary">{sub}</Text>
+        </VStack>
+      </HStack>
+    </Card>
   )
 }
 
@@ -181,163 +188,84 @@ function ContentDashboard({ user }: { user: User }) {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   })
 
+  const alerts: { name: string; msg: string; dot: StatusDotVariant }[] = [
+    { name: "Park Jihye",  msg: "Membership expires in 1 day",  dot: "error" },
+    { name: "Oh Seungwoo", msg: "3 sessions remaining",          dot: "warning" },
+    { name: "Kim Minjun",  msg: "Membership expires in 5 days",  dot: "warning" },
+    { name: "Han Eunji",   msg: "No attendance in 14 days",      dot: "neutral" },
+  ]
+
   return (
-    <div className="flex flex-col gap-6">
+    <VStack gap={6}>
       {/* Greeting banner */}
-      <div className="bg-linear-to-r from-[#1a1a2e] to-[#2563eb] rounded-xl p-6 flex items-center justify-between">
-        <div>
-          <p className="text-blue-200 text-[13px] mb-1">{today}</p>
-          <h1 className="text-white text-[24px] font-semibold leading-tight">
-            {greeting}, {trainerName}
-          </h1>
-          <p className="text-blue-200 text-[13px] mt-1">
-            {TODAY_SESSIONS.filter((s) => s.status === "Confirmed").length} confirmed sessions today ·{" "}
-            {MOCK_MEMBERS.filter((m) => m.remaining <= 2 && m.status === "active").length} members expiring soon
-          </p>
-        </div>
-        <div className="hidden sm:flex items-center justify-center w-16 h-16 rounded-full bg-white/10">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6.5 6.5h11" /><path d="M6.5 17.5h11" />
-            <path d="M3 9.5v5" /><path d="M21 9.5v5" />
-            <rect x="1" y="8" width="4" height="8" rx="1" />
-            <rect x="19" y="8" width="4" height="8" rx="1" />
-            <rect x="6" y="5" width="3" height="14" rx="1" />
-            <rect x="15" y="5" width="3" height="14" rx="1" />
-          </svg>
-        </div>
-      </div>
+      <Card variant="default" padding={6}>
+        <HStack justify="between" align="center">
+          <VStack gap={0.5}>
+            <Text type="supporting" color="secondary">{today}</Text>
+            <Heading level={1} type="display-2">{greeting}, {trainerName}</Heading>
+            <Text type="supporting" color="secondary">
+              {TODAY_SESSIONS.filter((s) => s.status === "Confirmed").length} confirmed sessions today ·{" "}
+              {MOCK_MEMBERS.filter((m) => m.remaining <= 2 && m.status === "active").length} members expiring soon
+            </Text>
+          </VStack>
+          <div className="hidden sm:flex items-center justify-center w-16 h-16 rounded-full bg-black/10 shrink-0">
+            <IconDumbbell />
+          </div>
+        </HStack>
+      </Card>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard label="Total Members"       value={MOCK_MEMBERS.length}                                          sub="across all branches"   color="bg-[#10b981]" icon={<IconUsers />} />
-        <StatCard label="Today's PT Sessions" value={TODAY_SESSIONS.length}                                        sub={`${TODAY_SESSIONS.filter(s=>s.status==="Confirmed").length} confirmed`} color="bg-[#2563eb]" icon={<IconDumbbell />} />
-        <StatCard label="Upcoming Sessions"   value={TODAY_SESSIONS.filter(s=>s.status!=="Completed").length}      sub="remaining today"       color="bg-[#f59e0b]" icon={<IconCalendar />} />
-        <StatCard label="Active Members"      value={MOCK_MEMBERS.filter(m=>m.status==="active").length}           sub="currently enrolled"    color="bg-[#ef4444]" icon={<IconAlert />} />
+        <StatCard label="Total Members"       value={MOCK_MEMBERS.length}                                          sub="across all branches"   variant="default" iconBg="bg-dopamine-lime"   icon={<IconUsers />} />
+        <StatCard label="Today's PT Sessions" value={TODAY_SESSIONS.length}                                        sub={`${TODAY_SESSIONS.filter(s=>s.status==="Confirmed").length} confirmed`} variant="default" iconBg="bg-dopamine-violet" icon={<IconDumbbell />} />
+        <StatCard label="Upcoming Sessions"   value={TODAY_SESSIONS.filter(s=>s.status!=="Completed").length}      sub="remaining today"       variant="default" iconBg="bg-dopamine-yellow" icon={<IconCalendar />} />
+        <StatCard label="Active Members"      value={MOCK_MEMBERS.filter(m=>m.status==="active").length}           sub="currently enrolled"    variant="default" iconBg="bg-dopamine-pink"   icon={<IconAlert />} />
       </div>
 
       {/* Today schedule + Alerts */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2 bg-white rounded-xl border border-gray-200">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h2 className="text-[15px] font-semibold text-gray-800">Today&apos;s Schedule</h2>
-            <span className="text-[12px] text-gray-400">{TODAY_SESSIONS.length} sessions</span>
-          </div>
-          <div className="p-4 flex flex-col gap-2">
+        <Card padding={0} className="xl:col-span-2">
+          <HStack justify="between" align="center" className="px-5 py-4 border-b border-gray-100">
+            <Heading level={2} type="display-3">Today&apos;s Schedule</Heading>
+            <Text type="supporting" color="secondary">{TODAY_SESSIONS.length} sessions</Text>
+          </HStack>
+          <VStack gap={0.5} className="p-4">
             {TODAY_SESSIONS.map((s, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <span className="text-[13px] font-mono text-gray-400 w-12 shrink-0">{s.time}</span>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600 shrink-0">
-                    {s.member.split(" ").map(w=>w[0]).join("")}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-gray-800 truncate">{s.member}</p>
-                    <p className="text-[11px] text-gray-400">{s.type} · {s.branch}</p>
-                  </div>
-                </div>
-                <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full ${STATUS_STYLE[s.status]}`}>{s.status}</span>
-              </div>
+              <HStack key={i} gap={4} align="center" className="p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <Text type="supporting" color="secondary" className="font-mono w-12 shrink-0">{s.time}</Text>
+                <HStack gap={2} align="center" className="flex-1 min-w-0">
+                  <Avatar name={s.member} size="small" />
+                  <VStack gap={0} className="min-w-0">
+                    <Text weight="medium" className="truncate">{s.member}</Text>
+                    <Text type="supporting" color="secondary" size="xsm">{s.type} · {s.branch}</Text>
+                  </VStack>
+                </HStack>
+                <Badge variant={STATUS_BADGE_VARIANT[s.status]} label={s.status} />
+              </HStack>
             ))}
-          </div>
-        </div>
+          </VStack>
+        </Card>
 
-        <div className="bg-white rounded-xl border border-gray-200">
+        <Card padding={0}>
           <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-[15px] font-semibold text-gray-800">Alerts</h2>
+            <Heading level={2} type="display-3">Alerts</Heading>
           </div>
-          <div className="p-4 flex flex-col gap-3">
-            {[
-              { name: "Park Jihye",  msg: "Membership expires in 1 day",  dot: "bg-red-500" },
-              { name: "Oh Seungwoo", msg: "3 sessions remaining",          dot: "bg-orange-400" },
-              { name: "Kim Minjun",  msg: "Membership expires in 5 days",  dot: "bg-yellow-400" },
-              { name: "Han Eunji",   msg: "No attendance in 14 days",      dot: "bg-gray-400" },
-            ].map((a, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${a.dot}`} />
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium text-gray-800 truncate">{a.name}</p>
-                  <p className="text-[12px] text-gray-400 mt-0.5">{a.msg}</p>
-                </div>
-              </div>
+          <VStack gap={1} className="p-4">
+            {alerts.map((a, i) => (
+              <HStack key={i} gap={3} align="start" className="p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                <span className="mt-1.5">
+                  <StatusDot variant={a.dot} label={a.msg} />
+                </span>
+                <VStack gap={0} className="min-w-0">
+                  <Text weight="medium" className="truncate">{a.name}</Text>
+                  <Text type="supporting" color="secondary" size="xsm">{a.msg}</Text>
+                </VStack>
+              </HStack>
             ))}
-          </div>
-        </div>
+          </VStack>
+        </Card>
       </div>
-    </div>
-  )
-}
-
-// ─── Tab Content: Members ─────────────────────────────────────────────────────
-
-function ContentMembers() {
-  const [query, setQuery] = useState("")
-  const filtered = MOCK_MEMBERS.filter(m =>
-    m.name.toLowerCase().includes(query.toLowerCase()) || m.phone.includes(query)
-  )
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="relative max-w-sm">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><IconSearch /></span>
-        <input
-          value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search member name or phone…"
-          className="w-full pl-9 pr-4 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-[#2563eb] transition-colors"
-        />
-      </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                {["Member", "Phone", "Branch", "Status", "Remaining PT", ""].map(h => (
-                  <th key={h} className="text-left px-5 py-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-5 py-10 text-center text-[13px] text-gray-400">No members found</td></tr>
-              ) : filtered.map((m, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-semibold text-gray-600 shrink-0">
-                        {m.name.split(" ").map(w=>w[0]).join("")}
-                      </div>
-                      <span className="font-medium text-gray-800">{m.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-500">{m.phone}</td>
-                  <td className="px-5 py-3.5 text-gray-500">{m.branch}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${MEMBER_STATUS_STYLE[m.status]}`}>
-                      {m.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 max-w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${m.remaining<=2?"bg-red-400":m.remaining<=5?"bg-yellow-400":"bg-[#2563eb]"}`}
-                          style={{ width: `${Math.min(100,(m.remaining/12)*100)}%` }}
-                        />
-                      </div>
-                      <span className={`text-[13px] font-medium ${m.remaining<=2?"text-red-500":m.remaining<=5?"text-yellow-600":"text-gray-700"}`}>
-                        {m.remaining}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <button className="text-[12px] text-[#2563eb] hover:underline">Profile →</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </VStack>
   )
 }
 
@@ -406,9 +334,9 @@ function ContentWeeklySchedule() {
                   return (
                     <td key={day} className="px-2 py-2 text-center">
                       {slot ? (
-                        <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-2 py-2 text-left">
-                          <p className="text-[11px] font-semibold text-[#2563eb] truncate">{slot.member.split(" ")[0]}</p>
-                          <p className="text-[10px] text-blue-400 truncate">{slot.type}</p>
+                        <div className="bg-pastel-lavender border border-dopamine-violet/25 rounded-lg px-2 py-2 text-left">
+                          <p className="text-[11px] font-semibold text-dopamine-violet truncate">{slot.member.split(" ")[0]}</p>
+                          <p className="text-[10px] text-dopamine-violet/60 truncate">{slot.type}</p>
                         </div>
                       ) : (
                         <div className="h-10 rounded-lg border border-dashed border-gray-200 flex items-center justify-center">
@@ -432,7 +360,10 @@ function ContentWeeklySchedule() {
 function TabContent({ tabId, user }: { tabId: string; user: User }) {
   switch (tabId) {
     case "dashboard":        return <ContentDashboard user={user} />
-    case "members":          return <ContentMembers />
+    case "staff":            return <StaffContent user={user} />
+    case "members":          return <MembersContent user={user} />
+    case "products":         return <ProductsContent user={user} />
+    case "lessons":          return <LessonsContent user={user} />
     case "today-sessions":   return <ContentTodaySessions />
     case "weekly-schedule":  return <ContentWeeklySchedule />
     case "schedule-calendar":return <ContentWeeklySchedule />
@@ -448,10 +379,12 @@ const DEFAULT_TAB: Tab = { id: "dashboard", title: "Dashboard", closable: false 
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [user, setUser]     = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [tabs, setTabs]     = useState<Tab[]>([DEFAULT_TAB])
   const [activeId, setActiveId] = useState("dashboard")
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     api.get<User>("/auth/me")
@@ -463,6 +396,17 @@ export default function DashboardPage() {
       .catch(() => router.replace("/login"))
       .finally(() => setLoading(false))
   }, [router])
+
+  // Sidebar items clicked from other pages (e.g. /dashboard/staff) land back
+  // here with ?tab=<id> — open that tab instead of always defaulting to Dashboard.
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (tab && tab !== "dashboard") {
+      const title = tab.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      openTab(tab, title)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   function openTab(id: string, title: string) {
     setTabs(prev => {
@@ -492,8 +436,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-pastel-cream flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-dopamine-violet rounded-full animate-spin" />
       </div>
     )
   }
@@ -501,11 +445,20 @@ export default function DashboardPage() {
   if (!user) return null
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar activeTabId={activeId} openTab={openTab} />
+    <div className="relative flex h-screen overflow-hidden bg-white">
+      <Sidebar
+        activeTabId={activeId}
+        openTab={openTab}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+      />
 
-      <div className="flex-1 flex flex-col min-w-0 ml-65">
-        <Header user={user} />
+      <div className={`flex-1 flex flex-col min-w-0 transition-[margin] duration-300 ${sidebarCollapsed ? "ml-16" : "ml-65"}`}>
+        <Header
+          user={user}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
+        />
 
         {/* Tab bar */}
         <TabBar
@@ -517,7 +470,7 @@ export default function DashboardPage() {
         />
 
         {/* Content area */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-white">
           <TabContent tabId={activeId} user={user} />
         </main>
       </div>

@@ -129,3 +129,10 @@ UI components are NOT shared (React div vs React Native View).
 6. Payment recording via Toss Payments
 7. Auto Kakao AlimTalk: expiry D-7 / D-3 / D-1
 8. Dashboard: today's classes, revenue summary, expiring members
+
+
+## Token & Context Optimization Rules
+- **Surgical Code Modifications**: Only modify the exact lines of code that need changes. Do not rewrite whole files or modify unrelated formatting.
+- **Minimal Explanation**: Provide highly concise explanations. Focus heavily on providing clean, working code snippets rather than verbose commentary.
+- **No Speculative Coding**: Do not implement unrequested features, future abstractions, or speculative architectures that inflate context size.
+- **Proactive /clear Reminders**: When a task is completed or the conversation switches topics, proactively advise the user to use the `/clear` command to reset the context window.

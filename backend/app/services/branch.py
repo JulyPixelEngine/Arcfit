@@ -10,13 +10,14 @@ async def list_branches(db: AsyncSession, search: str | None = None) -> list[Bra
     return await branch_repo.get_all(db, search)
 
 
-async def create_branch(db: AsyncSession, data: BranchCreate) -> Branch:
+async def create_branch(db: AsyncSession, data: BranchCreate, customer_id: str | None = None) -> Branch:
     return await branch_repo.create(
         db,
         name=data.name,
         address=data.address,
         phone=data.phone,
         description=data.description,
+        customer_id=customer_id,
     )
 
 

@@ -18,6 +18,10 @@ import app.models.member      # noqa: F401
 import app.models.pt_session  # noqa: F401
 import app.models.user        # noqa: F401
 import app.models.role        # noqa: F401
+import app.models.product     # noqa: F401
+import app.models.class_type     # noqa: F401
+import app.models.trainer_level  # noqa: F401
+import app.models.lead            # noqa: F401
 
 SUPER_ADMIN_EMAIL = "superadmin@system.com"
 SUPER_ADMIN_PASSWORD = "SuperAdmin#2024!"  # Change this after first login

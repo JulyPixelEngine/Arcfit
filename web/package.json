@@ -8,9 +8,14 @@
     "start": "next start"
   },
   "dependencies": {
+    "@astryxdesign/core": "^0.1.2",
+    "@astryxdesign/theme-matcha": "^0.1.2",
+    "@astryxdesign/theme-neutral": "^0.1.2",
+    "@astryxdesign/theme-stone": "^0.1.2",
     "axios": "^1.13.6",
     "framer-motion": "^12.34.3",
     "next": "16.1.6",
+    "next-intl": "^4.13.1",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"

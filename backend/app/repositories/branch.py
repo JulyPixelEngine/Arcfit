@@ -19,8 +19,15 @@ async def get_by_id(db: AsyncSession, branch_id: str) -> Branch | None:
     return result.scalar_one_or_none()
 
 
-async def create(db: AsyncSession, name: str, address: str, phone: str | None, description: str | None) -> Branch:
-    branch = Branch(name=name, address=address, phone=phone, description=description)
+async def create(
+    db: AsyncSession,
+    name: str,
+    address: str,
+    phone: str | None,
+    description: str | None,
+    customer_id: str | None = None,
+) -> Branch:
+    branch = Branch(name=name, address=address, phone=phone, description=description, customer_id=customer_id)
     db.add(branch)
     await db.commit()
     await db.refresh(branch)

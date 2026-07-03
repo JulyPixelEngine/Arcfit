@@ -32,12 +32,21 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// A 401 from these endpoints just means "wrong credentials" — let the calling
+// page show its own inline error instead of force-redirecting.
+const AUTH_ATTEMPT_PATHS = ["/auth/login", "/auth/register"]
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && typeof window !== "undefined") {
+    const isAuthAttempt = AUTH_ATTEMPT_PATHS.some((p) => err.config?.url?.includes(p))
+    if (err.response?.status === 401 && !isAuthAttempt && typeof window !== "undefined") {
       clearSession()
-      window.location.href = "/login"
+      // Clear the (expired/invalid) httpOnly cookie server-side, otherwise the
+      // middleware keeps seeing a token and bounces between /login and /dashboard forever.
+      axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true }).finally(() => {
+        window.location.href = "/login"
+      })
     }
     return Promise.reject(err)
   }

@@ -102,7 +102,7 @@ function RoleDropdown({ userId, currentRole, onChanged }: { userId: string; curr
             <button
               key={r}
               onClick={() => changeRole(r)}
-              className={`w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 transition-colors ${r === currentRole ? "font-semibold text-blue-600" : "text-gray-700"}`}
+              className={`w-full text-left px-3 py-2 text-[13px] hover:bg-gray-50 transition-colors ${r === currentRole ? "font-semibold text-dopamine-violet" : "text-gray-700"}`}
             >
               {r}
             </button>
@@ -175,7 +175,12 @@ export default function UserManagementPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar activeTabId="settings-users" openTab={() => {}} />
+      <Sidebar
+        activeTabId="settings-users"
+        openTab={(id) => router.push(`/dashboard?tab=${id}`)}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+      />
       <div className="flex-1 flex flex-col min-w-0 ml-65">
         <Header user={currentUser} />
 

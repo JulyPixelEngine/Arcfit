@@ -324,7 +324,12 @@ export default function BranchManagementPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar activeTabId="settings-branches" openTab={() => {}} />
+      <Sidebar
+        activeTabId="settings-branches"
+        openTab={(id) => router.push(`/dashboard?tab=${id}`)}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+      />
       <div className="flex-1 flex flex-col min-w-0 ml-65">
         <Header user={currentUser} />
 
@@ -365,7 +370,7 @@ export default function BranchManagementPage() {
               <p className="text-[14px]">등록된 지점이 없습니다</p>
               <button
                 onClick={() => setModal("create")}
-                className="mt-4 text-[13px] text-blue-500 hover:text-blue-700 transition-colors"
+                className="mt-4 text-[13px] text-dopamine-violet hover:opacity-70 transition-colors"
               >
                 첫 번째 지점 등록하기 →
               </button>
@@ -384,7 +389,7 @@ export default function BranchManagementPage() {
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => setModal(branch)}
-                        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:text-dopamine-violet hover:bg-pastel-lavender transition-colors"
                       >
                         <IconEdit />
                       </button>

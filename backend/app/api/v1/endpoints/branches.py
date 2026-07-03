@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth_database import get_auth_db
 from app.core.deps import require_roles
+from app.models.user import User
 from app.schemas.branch import BranchCreate, BranchResponse, BranchUpdate
 from app.services import branch as branch_service
 
@@ -19,9 +20,16 @@ async def list_branches(search: str | None = None, db: AsyncSession = Depends(ge
     return await branch_service.list_branches(db, search)
 
 
-@router.post("/", response_model=BranchResponse, dependencies=[Depends(require_roles(*ADMIN_ROLES))])
-async def create_branch(body: BranchCreate, db: AsyncSession = Depends(get_auth_db)):
-    return await branch_service.create_branch(db, body)
+@router.post("/", response_model=BranchResponse)
+async def create_branch(
+    body: BranchCreate,
+    current_user: Annotated[User, Depends(require_roles(*ADMIN_ROLES))],
+    db: AsyncSession = Depends(get_auth_db),
+):
+    # A studio admin's branches always belong to their own customer — a
+    # super-admin (platform operator, no customer_id) creating one directly
+    # here is an edge case; normally studios are onboarded via create_customer.py.
+    return await branch_service.create_branch(db, body, customer_id=current_user.customer_id)
 
 
 @router.put("/{branch_id}", response_model=BranchResponse, dependencies=[Depends(require_roles(*ADMIN_ROLES))])

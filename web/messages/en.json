@@ -1,0 +1,30 @@
+{
+  "common": {
+    "appName": "FitCore",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "edit": "Edit",
+    "delete": "Delete",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "Login": {
+    "wordmark": "FitCore",
+    "title": "Welcome back.",
+    "subtitle": "Sign in to continue to your studio",
+    "branch": "Branch",
+    "selectBranch": "Select a branch",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in…",
+    "orContinueWith": "Or continue with",
+    "noAccount": "No account?",
+    "createOne": "Create one",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "registered": "Account created. Please sign in.",
+    "loginFailed": "Login failed. Please try again."
+  }
+}

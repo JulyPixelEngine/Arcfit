@@ -41,13 +41,11 @@ export default function SocialButton({ provider, className = "", ...props }: Soc
     <button
       type="button"
       className={`
-        flex w-full items-center justify-center gap-3
-        border border-[#e5e5e5] bg-white
-        py-3 px-4 text-[13px] text-black
-        hover:bg-[#fafafa] transition-colors duration-200
+        glass-pill font-body flex w-full items-center justify-center gap-3
+        rounded-xl py-3 px-4 text-[13px] text-foreground
+        hover:bg-white/60 transition-colors duration-200
         ${className}
       `}
-      style={{ fontFamily: "var(--font-inter)" }}
       {...props}
     >
       {icons[provider]}

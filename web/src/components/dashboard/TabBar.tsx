@@ -27,7 +27,7 @@ export default function TabBar({ tabs, activeId, onSwitch, onClose, onCloseAll }
   const closableTabs = tabs.filter((t) => t.closable)
 
   return (
-    <div className="flex items-center border-b border-gray-200 bg-white px-2 min-h-[42px] overflow-x-auto">
+    <div className="glass-bar font-body flex items-center border-x-0 border-t-0 rounded-none px-2 min-h-[42px] overflow-x-auto">
       {/* Tabs */}
       <div className="flex items-stretch gap-0.5 flex-1 min-w-0">
         {tabs.map((tab) => {
@@ -38,13 +38,13 @@ export default function TabBar({ tabs, activeId, onSwitch, onClose, onCloseAll }
               onClick={() => onSwitch(tab.id)}
               className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] whitespace-nowrap transition-colors rounded-t ${
                 isActive
-                  ? "text-[#2563eb] bg-gray-50"
-                  : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                  ? "text-dopamine-violet bg-white/50"
+                  : "text-gray-400 hover:text-gray-700 hover:bg-white/30"
               }`}
             >
               {tab.title}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2563eb] rounded-t" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t bg-gradient-to-r from-dopamine-violet to-dopamine-pink" />
               )}
               {tab.closable && (
                 <span
@@ -52,7 +52,7 @@ export default function TabBar({ tabs, activeId, onSwitch, onClose, onCloseAll }
                   onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
                   className={`flex items-center justify-center w-4 h-4 rounded transition-colors ${
                     isActive
-                      ? "text-[#2563eb] hover:bg-blue-100"
+                      ? "text-dopamine-violet hover:bg-dopamine-violet/10"
                       : "text-gray-300 group-hover:text-gray-500 hover:bg-gray-200"
                   }`}
                 >

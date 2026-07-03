@@ -3,10 +3,13 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import api, { clearSession } from "@/lib/api"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 interface HeaderProps {
   user: { email: string; name?: string } | null
   onMenuToggle?: () => void
+  sidebarCollapsed?: boolean
+  onToggleSidebar?: () => void
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -17,6 +20,20 @@ function IconMenu() {
       <line x1="3" x2="21" y1="6" y2="6" />
       <line x1="3" x2="21" y1="12" y2="12" />
       <line x1="3" x2="21" y1="18" y2="18" />
+    </svg>
+  )
+}
+
+function IconPanelToggle({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg
+      width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <line x1="9" x2="9" y1="3" y2="21" />
+      <path d="m14 9-3 3 3 3" />
     </svg>
   )
 }
@@ -77,7 +94,7 @@ function IconSettings() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function Header({ user, onMenuToggle }: HeaderProps) {
+export default function Header({ user, onMenuToggle, sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -109,7 +126,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
     : user?.email?.slice(0, 2).toUpperCase() ?? "??"
 
   return (
-    <header className="sticky top-0 z-10 h-[64px] bg-white border-b border-gray-200 flex items-center px-6 gap-4">
+    <header className="glass-bar font-body sticky top-0 z-10 h-[64px] flex items-center px-6 gap-4 border-x-0 border-t-0 rounded-none">
       {/* Hamburger */}
       <button
         onClick={onMenuToggle}
@@ -117,6 +134,17 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
       >
         <IconMenu />
       </button>
+
+      {/* Sidebar collapse toggle */}
+      {onToggleSidebar && (
+        <button
+          onClick={onToggleSidebar}
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden lg:flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors shrink-0"
+        >
+          <IconPanelToggle collapsed={!!sidebarCollapsed} />
+        </button>
+      )}
 
       {/* Search */}
       <div className="flex-1 max-w-[400px]">
@@ -127,7 +155,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           <input
             type="text"
             placeholder="Search members, sessions..."
-            className="w-full h-9 pl-9 pr-4 text-[13px] bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white transition-colors"
+            className="w-full h-9 pl-9 pr-4 text-[13px] bg-white/50 border border-border rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:border-dopamine-violet focus:bg-white/80 transition-colors"
           />
         </div>
       </div>
@@ -147,7 +175,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-11 w-[320px] bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+            <div className="glass-dropdown absolute right-0 top-11 w-[320px] rounded-xl py-2 z-50">
               <p className="text-[12px] uppercase tracking-wide text-gray-400 px-4 py-2 border-b border-gray-100">
                 Notifications
               </p>
@@ -170,6 +198,9 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           <IconMessage />
         </button>
 
+        {/* Language switcher */}
+        <LanguageSwitcher />
+
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200 mx-1" />
 
@@ -179,7 +210,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
             onClick={() => { setDropdownOpen((p) => !p); setNotifOpen(false) }}
             className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-[#2563eb] flex items-center justify-center text-white text-[12px] font-semibold">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-dopamine-violet to-dopamine-pink flex items-center justify-center text-white text-[12px] font-semibold">
               {initials}
             </div>
             <div className="hidden sm:block text-left">
@@ -194,7 +225,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-12 w-[190px] bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50">
+            <div className="glass-dropdown absolute right-0 top-12 w-[190px] rounded-xl py-1.5 z-50">
               <button
                 onClick={() => { router.push("/dashboard/profile"); setDropdownOpen(false) }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"

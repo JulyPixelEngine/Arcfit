@@ -1,26 +1,249 @@
-@import "tailwindcss";
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "@astryxdesign/theme-stone/theme.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* ── Pretendard (KR header) & Spoqa Han Sans Neo (KR accent) — not on Google Fonts, self-hosted via CDN ── */
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Spoqa Han Sans Neo";
+  src: url("https://cdn.jsdelivr.net/npm/spoqa-han-sans@3.3.1/Subset/SpoqaHanSansNeo-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Spoqa Han Sans Neo";
+  src: url("https://cdn.jsdelivr.net/npm/spoqa-han-sans@3.3.1/Subset/SpoqaHanSansNeo-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --muted: #737373;
-  --border: #e5e5e5;
+  /* ── Base surfaces ──
+     Page background follows the Astryx stone theme's body token (set by
+     <Theme> on <html data-astryx-theme="stone">); individual Cards stay
+     white via Astryx's own --color-background-card. */
+  --background: var(--color-background-body, #fffaf5);
+  --foreground: #1a1523;
+  --muted: #8b8496;
+  /* Was a lavender tint (#ece3f5) — now follows Astryx stone's neutral border token. */
+  --border: var(--color-border, #e2e2e8);
+
+  /* ── Font stacks (latin -> latin -> korean -> fallback) ── */
+  --font-header: var(--font-montserrat), var(--font-poppins), "Pretendard Variable", system-ui, sans-serif;
+  --font-body: var(--font-inter), var(--font-roboto), var(--font-noto-kr), system-ui, sans-serif;
+  --font-accent: var(--font-dm-sans), var(--font-quicksand), "Spoqa Han Sans Neo", system-ui, sans-serif;
+
+  /* ── Wellness pastel palette (calm base / surfaces) ── */
+  --pastel-lavender: #ece3ff;
+  --pastel-mint: #d9f7e8;
+  --pastel-peach: #ffe8d9;
+  --pastel-sky: #dcefff;
+  --pastel-blush: #ffe1ec;
+  --pastel-cream: #fff6e9;
+
+  /* ── Dopamine vivid palette (energy / CTA / highlights) ── */
+  --dopamine-violet: #7c3aed;
+  --dopamine-pink: #ff3d9a;
+  --dopamine-coral: #ff6b5b;
+  --dopamine-lime: #a3e635;
+  --dopamine-yellow: #ffd23f;
+  --dopamine-sky: #22c1ff;
+
+  /* ── Glass surface tokens ── */
+  --glass-fill: rgba(255, 255, 255, 0.32);
+  --glass-fill-strong: rgba(255, 255, 255, 0.42);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  /* Ambient drop shadow (depth) + bright inner rim top (specular) + soft dark falloff bottom (volume) */
+  --glass-shadow:
+    0 20px 45px rgba(20, 10, 45, 0.25),
+    0 1.5px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -14px 24px rgba(20, 10, 45, 0.08) inset;
+  --glass-sheen: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.15) 22%,
+    rgba(255, 255, 255, 0) 45%,
+    rgba(255, 255, 255, 0) 68%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --font-header: var(--font-header);
+  --font-body: var(--font-body);
+  --font-accent: var(--font-accent);
+
+  --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-mint: var(--pastel-mint);
+  --color-pastel-peach: var(--pastel-peach);
+  --color-pastel-sky: var(--pastel-sky);
+  --color-pastel-blush: var(--pastel-blush);
+  --color-pastel-cream: var(--pastel-cream);
+
+  --color-dopamine-violet: var(--dopamine-violet);
+  --color-dopamine-pink: var(--dopamine-pink);
+  --color-dopamine-coral: var(--dopamine-coral);
+  --color-dopamine-lime: var(--dopamine-lime);
+  --color-dopamine-yellow: var(--dopamine-yellow);
+  --color-dopamine-sky: var(--dopamine-sky);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-header);
 }
 
 /* Remove default number input arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
+}
+
+/* ── Liquid glass primitives ──
+   Real (Apple-style) liquid glass reads as: glossy specular sheen across the
+   surface, background colors bending/saturating vividly through it, and a
+   volumetric edge (bright rim on top, soft dark falloff on bottom) rather
+   than a flat frosted rectangle. All glass-* classes get a ::before sheen
+   layer. NOTE: no `overflow: hidden` here on purpose — several of these
+   classes (Header, TabBar) contain absolutely-positioned dropdown children
+   that must be able to overflow their bounds; the sheen clips itself to the
+   host's shape via `border-radius: inherit` instead. */
+@layer components {
+  .glass-panel,
+  .glass-panel-strong,
+  .glass-dropdown,
+  .glass-pill {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .glass-panel::before,
+  .glass-panel-strong::before,
+  .glass-dropdown::before,
+  .glass-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+    background: var(--glass-sheen);
+    mix-blend-mode: overlay;
+  }
+
+  .glass-panel > *,
+  .glass-panel-strong > *,
+  .glass-dropdown > *,
+  .glass-pill > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  .glass-panel {
+    background: var(--glass-fill);
+    backdrop-filter: blur(20px) saturate(220%) brightness(1.08);
+    -webkit-backdrop-filter: blur(20px) saturate(220%) brightness(1.08);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-panel-strong {
+    background: var(--glass-fill-strong);
+    backdrop-filter: blur(26px) saturate(220%) brightness(1.1);
+    -webkit-backdrop-filter: blur(26px) saturate(220%) brightness(1.1);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Light glassmorphism bar — for chrome sitting directly on a plain white
+     page (TabBar) where the deep colorful --glass-shadow reads as an ugly
+     dark smear instead of glass. Same recipe idea (translucent fill +
+     backdrop-blur + hairline border), just tuned light instead of dark. */
+  .glass-bar {
+    background: rgba(255, 255, 255, 0.6);
+    background-clip: padding-box;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(236, 227, 245, 0.9);
+    box-shadow: 0 1px 0 rgba(20, 10, 45, 0.04);
+  }
+
+  /* Floating menus/dropdowns over light content — needs a more opaque base
+     and a colored rim since there's no vivid background behind them for the
+     blur/saturate to pick up. */
+  .glass-dropdown {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(124, 58, 237, 0.22);
+    box-shadow:
+      0 16px 40px rgba(26, 18, 48, 0.2),
+      0 1.5px 0 rgba(255, 255, 255, 0.95) inset,
+      0 -10px 18px rgba(124, 58, 237, 0.06) inset;
+  }
+
+  .glass-pill {
+    background: var(--glass-fill);
+    backdrop-filter: blur(14px) saturate(200%) brightness(1.08);
+    -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      0 6px 16px rgba(20, 10, 45, 0.12),
+      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  }
+
+  /* Glossy sheen for solid-color CTAs (gradient-filled buttons) — same
+     specular-highlight trick as the glass-* classes, but for opaque surfaces. */
+  .glossy-cta {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    box-shadow:
+      0 10px 28px rgba(124, 58, 237, 0.4),
+      0 1.5px 0 rgba(255, 255, 255, 0.55) inset,
+      0 -12px 20px rgba(0, 0, 0, 0.18) inset;
+  }
+
+  .glossy-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: var(--glass-sheen);
+    mix-blend-mode: overlay;
+  }
+
+  .glossy-cta > * {
+    position: relative;
+    z-index: 2;
+  }
 }

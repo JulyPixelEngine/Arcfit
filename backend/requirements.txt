@@ -10,6 +10,7 @@ psycopg2-binary==2.9.9
 # Validation & Settings
 pydantic==2.9.2
 pydantic-settings==2.5.2
+email-validator==2.3.0
 
 # Auth
 python-jose[cryptography]==3.3.0
